@@ -161,6 +161,7 @@ _ABBREV = {
     "off_track_penalty": "otp",
     "lap_time_improvement_bonus": "ltib",
     "lidar_wall_weight": "lww",
+    "new_action_unlock_bonus": "naub",
     # rocket_league reward params
     "vel_to_ball_weight": "vtb",
     "boost_weight": "bw",

@@ -161,9 +161,11 @@ class SC2RewardConfig:
     new_action_unlock_bonus :
         One-shot bonus per fn_idx that becomes newly available for the first
         time in an episode, restricted to actions whose tech-tree preconditions
-        include at least one required building (i.e. the action was gated behind
-        a building that was just completed — e.g. ``Build_Barracks_screen``
-        unlocks when a ``SupplyDepot`` is finished).  Selection-only actions
+        include at least one required building. Because an action's appearance
+        in ``available_fn_ids`` requires all preconditions to be met (including
+        resource affordability, prerequisite buildings, and having the correct
+        unit selected), this bonus fires on first *executable availability*
+        rather than exactly when the prerequisite building completes. Selection-only actions
         (``Move_screen``, ``Attack_screen``, basic training) and always-available
         actions (``no_op``, ``select_army``) do not trigger the bonus.  The
         bonus fires once per qualifying fn_idx per episode; each subsequent step
