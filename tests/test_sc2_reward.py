@@ -1829,5 +1829,38 @@ class TestNewActionUnlockBonus(unittest.TestCase):
         self.assertAlmostEqual(total, sum(comp.values()), places=5)
 
 
+class TestExcessResourcesPenalty(unittest.TestCase):
+    def _make_calc(self, **kwargs):
+        cfg = SC2RewardConfig(
+            score_weight=0.0, step_penalty=0.0, economy_weight=0.0, **kwargs
+        )
+        return SC2RewardCalculator(cfg)
+
+    def test_excess_resources_penalty(self):
+        calc = self._make_calc(
+            excess_minerals_penalty=-0.0001,
+            excess_vespene_penalty=-0.0002,
+        )
+        # Below threshold: 300 min, 200 vesp -> no penalty
+        reward, comps = calc.compute_with_components(
+            None, None, False, 0.0, {"minerals": 300, "vespene": 200}
+        )
+        self.assertEqual(comps["excess_minerals_penalty"], 0.0)
+        self.assertEqual(comps["excess_vespene_penalty"], 0.0)
+
+        # Above threshold: 400 min (100 excess), 250 vesp (50 excess)
+        reward, comps = calc.compute_with_components(
+            None, None, False, 0.0, {"minerals": 400, "vespene": 250}
+        )
+        self.assertAlmostEqual(comps["excess_minerals_penalty"], -0.01) # 100 * -0.0001
+        self.assertAlmostEqual(comps["excess_vespene_penalty"], -0.01)  # 50 * -0.0002
+
+        # 2 ticks scaling
+        reward, comps = calc.compute_with_components(
+            None, None, False, 0.0, {"minerals": 400, "vespene": 250}, n_ticks=2
+        )
+        self.assertAlmostEqual(comps["excess_minerals_penalty"], -0.02)
+        self.assertAlmostEqual(comps["excess_vespene_penalty"], -0.02)
+
 if __name__ == "__main__":
     unittest.main()

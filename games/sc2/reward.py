@@ -173,6 +173,12 @@ class SC2RewardConfig:
         — opt-in.  Recommended starting range: ``1.0–10.0`` (much larger than
         per-step shaping terms so the tech-unlock signal is clearly visible to
         the policy).
+    excess_minerals_penalty :
+        Per-step penalty applied when minerals exceed 300, proportional to the
+        amount over 300. Default ``0.0`` — opt-in.
+    excess_vespene_penalty :
+        Per-step penalty applied when vespene exceeds 200, proportional to the
+        amount over 200. Default ``0.0`` — opt-in.
     """
 
     score_weight: float = 1.0
@@ -199,6 +205,8 @@ class SC2RewardConfig:
     early_random_action_bonus: float = 0.0
     early_random_action_window_steps: int = 250
     new_action_unlock_bonus: float = 0.0
+    excess_minerals_penalty: float = 0.0
+    excess_vespene_penalty: float = 0.0
 
     @classmethod
     def from_yaml(cls, path: str) -> SC2RewardConfig:
@@ -379,6 +387,21 @@ class SC2RewardCalculator(RewardCalculatorBase):
             components["economy"] = float(cfg.economy_weight * ((curr_min - prev_min) + (curr_vesp - prev_vesp)))
         else:
             components["economy"] = 0.0
+
+        # Excess resources penalty
+        excess_min = 0.0
+        excess_vesp = 0.0
+        curr_min = info.get("minerals", 0.0)
+        curr_vesp = info.get("vespene", 0.0)
+        
+        if cfg.excess_minerals_penalty != 0.0 and curr_min > 300:
+            excess_min = cfg.excess_minerals_penalty * (curr_min - 300) * n_ticks
+            
+        if cfg.excess_vespene_penalty != 0.0 and curr_vesp > 200:
+            excess_vesp = cfg.excess_vespene_penalty * (curr_vesp - 200) * n_ticks
+            
+        components["excess_minerals_penalty"] = float(excess_min)
+        components["excess_vespene_penalty"] = float(excess_vesp)
 
         # Idle penalty: nothing built and supply slack — encourages building.
         idle_pen = 0.0
